@@ -1,4 +1,4 @@
-import moment from "moment";
+import dayjs from "dayjs";
 
 let marketPrices = new Map();
 
@@ -29,10 +29,12 @@ export const getICPMarketPrice = async (
 
     let marketPrice = data.market_data.current_price.usd;
 
+    marketPrices.set(date, marketPrice);
+
     return marketPrice;
 };
 
 export const toCoingeckoTime = (time: number) => {
-    let date = moment(time).format("DD-MM-YYYY");
+    let date = dayjs(time).format("DD-MM-YYYY");
     return date;
 };

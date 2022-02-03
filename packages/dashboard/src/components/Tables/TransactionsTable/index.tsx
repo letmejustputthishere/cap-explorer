@@ -229,7 +229,7 @@ const TransactionsTable = ({
           <PriceCell>
             <div>{formatPriceForChart({ value: usdValue, abbreviation: 'USD' })}</div>
             <div>{formatPriceForChart({ value: icp, abbreviation: 'ICP' })}</div>
-            <div>{formatPriceForChart({ value: historicalUsdValue, abbreviation: 'USD' })}</div>
+            <div>Historic Price: {formatPriceForChart({ value: historicalUsdValue, abbreviation: 'USD' })}</div>
           </PriceCell>
         );
       },
