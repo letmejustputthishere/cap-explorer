@@ -4,6 +4,7 @@ import {
 import { prettifyCapTransactions } from '@psychedelic/cap-js'
 import { Principal } from '@dfinity/principal';
 import { decodeTokenId } from '@utils/token';
+import { getICPMarketPrice, toCoingeckoTime } from './icp';
 
 export default {};
 
@@ -35,22 +36,26 @@ type TransactionDetails = {
   from: Principal | string;
   to: Principal | string;
   amount: bigint;
+  price?: bigint;
   token?: string;
   tokenId?: string;
   token_id?: string;
+  tokend_id?: string;
 }
 
-type TokenField = 'token' | 'token_id' | 'tokenId';
+type TokenField = 'token' | 'token_id' | 'tokenId' | 'tokend_id';
 type TokenFields = TokenField[];
 
-export const parseGetTransactionsResponse = ({
+export const parseGetTransactionsResponse = async ({
   data,
 }: {
   data?: TransactionEvent[],
-}): Transaction[] | [] => {
+}): Promise<Transaction[] | []> => {
   if (!data || !Array.isArray(data) || !data.length) return [];
 
-  return data.map(v => {
+  let newData : Transaction[]= [];
+
+  for await (const v of data) {
     const { details } = prettifyCapTransactions(v) as unknown as { details : TransactionDetails};
 
     // TODO: validate details
@@ -58,7 +63,7 @@ export const parseGetTransactionsResponse = ({
     // TODO: To remove "possible fields" as the Token Standard field is now available!
     // TODO: there are no conventions on naming fields
     // so, for the moment will check for matching token
-    const possibleFields: TokenFields = ['token', 'token_id', 'tokenId'];
+    const possibleFields: TokenFields = ['token', 'token_id', 'tokenId', 'tokend_id'];
     const tokenField = possibleFields.find((field) => details[field]);
 
     const itemHandler = (details: TransactionDetails, tokenField: TokenField) => {      
@@ -83,7 +88,7 @@ export const parseGetTransactionsResponse = ({
       return tokenIndex;
     };
 
-    return {
+    newData.push({
       ...v,
       item: tokenField
             ? itemHandler(
@@ -93,14 +98,18 @@ export const parseGetTransactionsResponse = ({
             : undefined,
       to: details?.to?.toString(),
       from: details?.from?.toString(),
-      amount: details?.amount,
+      amount: { 
+        icp: details?.price, 
+        historicalMarketPrice: await getICPMarketPrice(toCoingeckoTime(Number(v.time))),
+        marketPrice: await getICPMarketPrice(toCoingeckoTime(Date.now()))
+      },
       operation: v.operation,
       time: toTransactionTime(v.time),
-    }
-  })
+    })
+  }
   // Reverse the order
   // because the natural order that the data is presented
   // from the response, is at the very top
   // showing the oldest transaction in the page
-  .reverse();
+  return newData.reverse();
 }
