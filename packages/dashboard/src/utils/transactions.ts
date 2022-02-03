@@ -52,8 +52,7 @@ export const parseGetTransactionsResponse = async ({
   data?: TransactionEvent[],
 }): Promise<Transaction[] | []> => {
   if (!data || !Array.isArray(data) || !data.length) return [];
-
-  return data.map(v  => {
+  let newData = await Promise.all(data.map(async (v) : Promise<Transaction> => {
     const { details } = prettifyCapTransactions(v) as unknown as { details : TransactionDetails};
 
     // TODO: validate details
@@ -98,16 +97,16 @@ export const parseGetTransactionsResponse = async ({
       from: details?.from?.toString(),
       amount: { 
         icp: details?.price, 
-        historicalMarketPrice: getICPMarketPrice(toCoingeckoTime(Number(v.time))),
-        marketPrice: getICPMarketPrice(toCoingeckoTime(Date.now()))
+        historicalMarketPrice: await getICPMarketPrice(toCoingeckoTime(Number(v.time))),
+        marketPrice: await getICPMarketPrice(toCoingeckoTime(Date.now()))
       },
       operation: v.operation,
       time: toTransactionTime(v.time),
     }
-  })
+  }))
   // Reverse the order
   // because the natural order that the data is presented
   // from the response, is at the very top
   // showing the oldest transaction in the page
-  .reverse();
+  return newData.reverse();
 }
