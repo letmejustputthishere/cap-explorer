@@ -9,7 +9,6 @@ import { TableId } from '@components/Tables/DataTable';
 import { dateRelative } from '@utils/date';
 import { formatPriceForChart } from '@utils/formatters';
 import Fleekon, { IconNames } from '@components/Fleekon';
-import { getXTCMarketValue } from '@utils/xtc';
 import {
   DABCollectionItem,
   NFTItemDetails,
@@ -114,7 +113,7 @@ enum TransactionTypeAlias {
 export interface Data {
   operation: string,
   item: number,
-  amount: string,
+  amount: {icp: number; historicalMarketPrice: number; marketPrice: number},
   from: string,
   to: string,
   time: string,
@@ -212,22 +211,25 @@ const TransactionsTable = ({
         return (
           <ItemCell
             metadata={metadata}
-            cellValue={cellValue}
+            cellValue={cellValue+1}
             derivedId={true}
             nftDetails={nftDetails}
             isLoadingDabItemDetails={isLoadingDabItemDetails}
           />
         );
       },
-      amount: (cellValue: number) => {
-        if (!cellValue || typeof cellValue !== 'bigint') return NOT_AVAILABLE_PLACEHOLDER;
+      amount: (cellValue: {icp: number; historicalMarketPrice: number; marketPrice: number}) => {
+        if (!cellValue["icp"] || typeof cellValue["icp"] !== 'bigint') return NOT_AVAILABLE_PLACEHOLDER;
 
-        const usdValue = getXTCMarketValue(cellValue);
+        const icp = Number(cellValue["icp"]) / 100000000 ;
+        const usdValue = icp * cellValue["marketPrice"];
+        const historicalUsdValue = icp * cellValue["historicalMarketPrice"];
 
         return (
           <PriceCell>
             <div>{formatPriceForChart({ value: usdValue, abbreviation: 'USD' })}</div>
-            <div>{formatPriceForChart({ value: cellValue, abbreviation: 'CYCLES' })}</div>
+            <div>{formatPriceForChart({ value: icp, abbreviation: 'ICP' })}</div>
+            <div>{formatPriceForChart({ value: historicalUsdValue, abbreviation: 'USD' })}</div>
           </PriceCell>
         );
       },

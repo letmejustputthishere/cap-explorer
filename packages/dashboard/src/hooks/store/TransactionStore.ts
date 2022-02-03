@@ -134,7 +134,7 @@ export const useTransactionStore = create<TransactionsStore>((set) => ({
       // as such, we keep track and persist the initial number
       return Math.max(MIN_PAGE_NUMBER, totalPages, Math.ceil(count));
     };
-    const pageData = parseGetTransactionsResponse(response);
+    const pageData = await parseGetTransactionsResponse(response);
 
     set((state: TransactionsStore) => ({
       isLoading: false,

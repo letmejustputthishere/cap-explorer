@@ -126,6 +126,17 @@ export const formatPriceForChart = ({
     return `${numeral(value).format('0,0')} ${CurrencyOptions[abbreviation]}`;
   }
 
+  if (abbreviation === 'ICP') {
+    if (value <= 0.000001) {
+      return `${
+        scientificNotationSmallNumHandler({
+          value: Number(value),
+        })
+      } ${CurrencyOptions[abbreviation]}`;
+    }
+    return `${numeral(value).format('0,0.00')} ${CurrencyOptions[abbreviation]}`;
+  }
+
   // Exception handler for small USD
   if (value <= 0.000001 && abbreviation === 'USD') {
     const computedValue = scientificNotationSmallNumHandler({
